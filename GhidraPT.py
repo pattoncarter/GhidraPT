@@ -1,4 +1,3 @@
-import json
 
 import re
 import textwrap
@@ -10,6 +9,7 @@ import logging
 import httplib
 
 # Set your API key
+
 api_key = 'API KEY'
 
 
@@ -80,7 +80,6 @@ def openai_request(prompt=PROMPT, temperature=0.19, max_tokens=MAX_TOKENS, engin
     logging.info("OpenAI request succeeded!")
     logging.info("Response: {data}".format(data=data))
     return data
-
 
 
 def format_response(response, max_width=80):
