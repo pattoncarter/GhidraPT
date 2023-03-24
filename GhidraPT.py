@@ -1,4 +1,3 @@
-
 import openai
 import re
 import textwrap
@@ -7,18 +6,18 @@ from ghidra.util.task import ConsoleTaskMonitor
 from ghidra.app.plugin.core.decompile import DecompilePlugin
 
 # Set your API key
-openai.api_key = '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'
+openai.api_key = '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'
 
 
 # Function to call ChatGPT API
 def analyze_assembly(recompiled_code):
     prompt = (
-        f"Please analyze the following recompiled code from Ghidra and provide a "
-        f"summary of its functionality. Include information about the main "
-        f"functions, important variables, and any potential security risks or "
-        f"optimization opportunities you can identify. Also, if possible, "
-        f"speculate on the purpose of the program or the context in which it might be used.\n\n"
-        f"Recompiled code:\n\n{recompiled_code}\n\nAnalysis:"
+        """Please analyze the following recompiled code from Ghidra and provide a 
+        summary of its functionality. Include information about the main 
+        functions, important variables, and any potential security risks or 
+        optimization opportunities you can identify. Also, if possible, 
+        speculate on the purpose of the program or the context in which it might be used.\n\n
+        Recompiled code:\n\n{recompiled_code}\n\nAnalysis:""".format(recompiled_code=recompiled_code)
     )
     response = openai.Completion.create(
         engine="text-davinci-003",
@@ -32,7 +31,6 @@ def analyze_assembly(recompiled_code):
         presence_penalty=0
     )
     return response.choices[0].text.strip()
-
 
 def format_response(response, max_width=80):
     # Split the response into sentences
@@ -58,11 +56,9 @@ def get_highlighted_text():
     return highlighted_text
 
 if __name__ == "__main__":
-    assembly_code = input("copy and paste assembly code here: ")
-    analysis = analyze_assembly(assembly_code)
+    analysis = analyze_assembly(get_highlighted_text())
     print("Analysis of the assembly code:")
     print(format_response(analysis))
-=======
 
 
 
