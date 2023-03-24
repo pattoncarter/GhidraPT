@@ -1,6 +1,10 @@
+
 import openai
 import re
 import textwrap
+from ghidra.app.decompiler import DecompInterface
+from ghidra.util.task import ConsoleTaskMonitor
+from ghidra.app.plugin.core.decompile import DecompilePlugin
 
 # Set your API key
 openai.api_key = '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'
@@ -43,10 +47,22 @@ def format_response(response, max_width=80):
         formatted_response += wrapped_sentence + "\n\n"
 
     return formatted_response.strip()
+# Function to get the highlighted text from the decompile panel in Ghidra
+def get_highlighted_text():
+    currentProgram = getCurrentProgram()
+    decompiler = DecompInterface()
+    decompiler.openProgram(currentProgram)
 
+
+    highlighted_text = currentLocation.getDecompile().getCCodeMarkup()
+    return highlighted_text
 
 if __name__ == "__main__":
     assembly_code = input("copy and paste assembly code here: ")
     analysis = analyze_assembly(assembly_code)
     print("Analysis of the assembly code:")
     print(format_response(analysis))
+=======
+
+
+
