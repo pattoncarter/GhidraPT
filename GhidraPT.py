@@ -48,15 +48,15 @@ if recompiled_code:
     PROMPT = (
         "Please analyze the following recompiled code from Ghidra and provide a "
         "summary of its functionality. Include information about the main "
-        "functions, important variables, and any potential security risks or "
-        "optimization opportunities you can identify. Also, if possible, "
-        "speculate on the purpose of the program or the context in which it might be used."
+        "functions and important variables."
+	"Rewrite the code, changing the variable names to have more meaning,"
+	"also apply standard coding procedures."
         "\n\nRecompiled code:\n\n" + str(recompiled_code) + "\n\nAnalysis:"
     )
 
 ENGINE = "text-davinci-003"
 
-MAX_TOKENS = 256
+MAX_TOKENS = 512
 
 
 def openai_request(prompt=PROMPT, temperature=0.19, max_tokens=MAX_TOKENS, engine=ENGINE):
@@ -95,6 +95,8 @@ def format_response(response, max_width=80):
         wrapped_sentence = textwrap.fill(sentence, width=max_width)
         formatted_response += wrapped_sentence + "\n\n"
 
-    return formatted_response.strip()
+    return "\n" + formatted_response.strip() + "\n"
 
-print(openai_request())
+response = openai_request()
+result_text = response['choices'][0]['text']
+print(result_text)
