@@ -10,7 +10,7 @@ import logging
 import httplib
 
 # Set your API key
-api_key = 'API-Key'
+api_key = 'Your API Key'
 
 
 # Function to get the highlighted text from the decompile panel in Ghidra
@@ -46,28 +46,26 @@ def openai_query(prompt=PROMPT, temperature=0.19, max_tokens=MAX_TOKENS, engine=
         "max_tokens": max_tokens,
         "temperature": temperature
     }
-    # The open ai api link is "https://api.openai.com/v1/completions"
-    host = "api.openai.com"
-    path = "/v1/completions"
-    key_file = {
+    endpoint_url = "api.openai.com/v1/completions"
+    headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer {openai_api_key}".format(openai_api_key=api_key)
     }
-    httpconn = httplib.HTTPSConnection(host)
+    connection = httplib.HTTPSConnection("api.openai.com")
     json_req_data = json.dumps(data)
-    httpconn.request("POST", path, json_req_data, key_file)
-    httpconn_response = httpconn.getresponse()
-    json_data = httpconn_response.read()
-    httpconn.close()
-    data = json.loads(json_data)
+    connection.request("POST", "/v1/completions", json_req_data, headers)
+    connection_response = connection.getresponse()
+    response_data = connection_response.read()
+    connection.close()
+    parsed_data = json.loads(response_data)
     logging.info("OpenAI request succeeded!")
-    logging.info("Response: {data}".format(data=data))
-    return data
+    logging.info("Response: {data}".format(data=parsed_data))
+    return parsed_data
 
 
-def format_response(response, max_width=80):
+def format_response(api_response, max_width=80):
     # Split the response into sentences
-    sentences = re.split('(?<=[.!?]) +', response)
+    sentences = re.split('(?<=[.!?]) +', api_response)
 
     # Initialize the formatted response string
     formatted_response = ""
