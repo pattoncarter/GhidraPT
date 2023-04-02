@@ -1,4 +1,3 @@
-
 import re
 import textwrap
 from ghidra.app.decompiler import DecompInterface
@@ -7,10 +6,12 @@ from ghidra.app.plugin.core.decompile import DecompilePlugin
 import json
 import logging
 import httplib
+import os
+from datetime import datetime
 
 # Set your API key
 
-api_key = 'API KEY'
+api_key = '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'
 
 
 def send_https_request(address, path, data, headers):
@@ -99,3 +100,13 @@ def format_response(response, max_width=80):
 response = openai_request()
 result_text = response['choices'][0]['text']
 print(result_text)
+
+# append results to the end of a file for future use
+#get file path for file containing the executable - results are stored in the same folder
+cwd = currentProgram.getExecutablePath()
+name_size = len(currentProgram.getName())
+filename = cwd[:-(name_size)] + "results.txt"
+with open(filename, 'a+') as file:
+    file.write("Run at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "\n")
+    file.write(result_text)
+    file.write("\n\n---------------------------\n\n")
