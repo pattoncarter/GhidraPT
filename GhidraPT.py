@@ -1,6 +1,5 @@
 # @Author: Carter Patton and Daxton Gilliam
 # @Functionality: This script utilizes chatGPT to analyze the highlighted recompiled code given by Ghidra.
-
 import json
 import re
 import textwrap
@@ -14,7 +13,7 @@ import os
 from datetime import datetime
 
 # Set your API key
-api_key = 
+api_key = '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'
 
 
 # Function to get the highlighted text from the decompile panel in Ghidra
@@ -69,8 +68,8 @@ def openai_query(prompt=PROMPT, temperature=0.19, max_tokens=MAX_TOKENS, engine=
 
 
 def format_response(api_response, max_width=80):
-    # Pull function name
-    functino
+    # # Pull function name
+    # functino
     # Split the response into sentences
     sentences = re.split('(?<=[.!?]) +', api_response)
 
