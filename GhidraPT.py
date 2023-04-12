@@ -13,7 +13,7 @@ import os
 from datetime import datetime
 
 # Set your API key
-api_key = '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'
+api_key = ''
 
 # setting up writing to file
 cwd = currentProgram.getExecutablePath()
@@ -48,8 +48,6 @@ def get_called_functions():
             except Exception as e:
                 file.write(f.toString())
 
-
-
 # returns all functions that call the current function (at the current address)
 # currently rewrites file every time it's run, so it's specific to the function in the file
 def get_calling_functions():
@@ -74,6 +72,12 @@ def get_variables_in_function():
         for v in all_vars:
             file.write(v.getName() + '\n')
 
+# writes the global namespace to a file
+# NOTE: how helpful is this in the grand scheme of things?
+def get_namespaces():
+    namespaces = getCurrentProgram().getNamespaceManager().getGlobalNamespace()
+    with open(filepath + "GhidraPT/namespaces.txt", 'a+') as file:
+        file.write(namespaces)
 
 
 # Function to get the highlighted text from the decompile panel in Ghidra
@@ -159,10 +163,7 @@ def format_response(api_response, max_width=80):
 # cwd = currentProgram.getExecutablePath()
 # name_size = len(currentProgram.getName())
 # filepath = cwd[:-(name_size)]
-get_function_names()
-get_called_functions()
-get_calling_functions()
-get_variables_in_function()
+
 # get_highlighted_text()
 with open(filepath + "GhidraPT/results.txt", 'a+') as file:
     file.write("Run at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "\n")
