@@ -3,9 +3,10 @@
 import json
 import re
 import textwrap
-from ghidra.app.decompiler import DecompInterface
+from ghidra.app.decompiler.flatapi import FlatDecompilerAPI
 from ghidra.util.task import ConsoleTaskMonitor
 from ghidra.app.plugin.core.decompile import DecompilePlugin
+from ghidra.program.flatapi import FlatProgramAPI
 import json
 import logging
 import httplib
@@ -20,6 +21,13 @@ cwd = currentProgram.getExecutablePath()
 name_size = len(currentProgram.getName())
 filepath = cwd[:-(name_size)]
 fm = currentProgram.getFunctionManager()
+
+# setting up FlatProgram
+state = getState()
+program = state.getCurrentProgram()
+fp = FlatProgramAPI(program)
+fd = FlatDecompilerAPI(fp)
+
 # TODO: make file for all folders to go into, rn errno 22 for inaccess, at
 # to run right now, make GhidraPT folder in project folder
 # os.mkdir(filepath + "GhidraPT")
@@ -82,17 +90,30 @@ def get_namespaces():
 
 # Function to get the highlighted text from the decompile panel in Ghidra
 def get_highlighted_text():
-    currentProgram = getCurrentProgram()
-    decompiler = DecompInterface()
-    decompiler.openProgram(currentProgram)
+    # get highlighted text
+    # decompile that highlighted text?
+    # currentProgram = getCurrentProgram()
+    currhighlight = getState().getCurrentHighlight()
+    testhigh = getState().getCurrentHighlight().iterator()
+    print("current highlight")
+    print(currhighlight.toString())
+    # for i in testhigh:
+        # print(i)
+    # print("current highlight")
+    # print(currhighlight.toString())
+    # print(currhighlight)
+    decompiler = FlatDecompilerAPI()
+    # decompiler.openProgram(currentProgram)
+    fnc = getFunctionContaining(currentAddress)
+    print(fd.getDecompiler().decompileFunction(fnc, 5, monitor))
 
-    highlighted_text = currentLocation.getDecompile().getCCodeMarkup()
+    highlighted_text = currentLocation.getDecompile()
     # highlight1 = state.getCurrentHighlight().toString()
     # print("code decompile")
     # # print(decompiler.decompileFunction(currentLocation, 5, monitor))
     # print("highlighted text")
     # print(highlight1)
-    return highlighted_text
+    # return highlighted_text
 
 
 recompiled_code = get_highlighted_text()
