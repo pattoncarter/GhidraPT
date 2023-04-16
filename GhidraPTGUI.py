@@ -1,33 +1,118 @@
-
+import json
 import re
 import textwrap
-from ghidra.app.decompiler import DecompInterface
+from ghidra.app.decompiler.flatapi import FlatDecompilerAPI
 from ghidra.util.task import ConsoleTaskMonitor
 from ghidra.app.plugin.core.decompile import DecompilePlugin
+from ghidra.program.flatapi import FlatProgramAPI
 import json
 import logging
 import httplib
+import os
+from datetime import datetime
+import httplib
 import pickle
-from javax.swing import JFrame, JButton, JLabel, JTextField, JList, JScrollPane
-from java.awt import FlowLayout
+from javax.swing import *
+from java.awt import *
+from javax.swing.table import DefaultTableModel
+
+
+# setting up FlatProgram
+state = getState()
+program = state.getCurrentProgram()
+fp = FlatProgramAPI(program)
+fd = FlatDecompilerAPI(fp)
+
+# return all variables in the current function
+# NOTE: gets the local variable names, not meaningful names
+# tried to get from decompile, however it outs in a string, so there's not a parser for fncs in a string
+def get_variables_in_function(event):
+    # currentProgram = getCurrentProgram()
+    # decompiler = DecompInterface()
+    # decompiler.openProgram(currentProgram)
+    fnc = getFunctionContaining(currentAddress)
+    # decfnc = decompiler.decompileFunction(fnc, 5, monitor).getDecompiledFunction().getC()
+    # fnc = currentLocation.getDecompile().getFunction()
+    with open(filepath + "GhidraPT/variables.txt", 'w') as file:
+        all_vars = fnc.getVariables(None)
+        for v in all_vars:
+            file.write(v.getName() + '\n')
+
+# Function to get the highlighted text from the decompile panel in Ghidra
+def get_highlighted_text(event):
+    # get highlighted text
+    # decompile that highlighted text?
+    # currentProgram = getCurrentProgram()
+    currhighlight = state.getCurrentHighlight()
+    print("current highlight")
+    print(currhighlight.toString())
+    # for i in testhigh:
+        # print(i)
+    # print("current highlight")
+    # print(currhighlight.toString())
+    # print(currhighlight)
+    decompiler = FlatDecompilerAPI()
+    # decompiler.openProgram(currentProgram)
+    fnc = getFunctionContaining(currentAddress)
+    print(fd.getDecompiler().decompileFunction(fnc, 5, monitor))
+
+    highlighted_text = currentLocation.getDecompile()
+    # highlight1 = state.getCurrentHighlight().toString()
+    # print("code decompile")
+    # # print(decompiler.decompileFunction(currentLocation, 5, monitor))
+    # print("highlighted text")
+    print(highlight1)
+    # return highlighted_text
+
 
 class ScriptGUI:
     def __init__(self):
         apiFrame = JFrame()
-        apiFrame.setSize(300,300)
+        apiFrame.setSize(400,300)
         apiFrame.setLocation(200,200)
+        apiFrame.setLayout(FlowLayout())
         apiFrame.setTitle("Enter API Key")
         
         # Set up list of functions
-        self.function_list = ["pizza", "apple"]
-        self.j_list = JList(self.function_list)
-        j_scroll = JScrollPane(self.j_list)
-        j_scroll.getViewport().setView(self.j_list)
+        self.function_list = ('Get Variables', 'Get Functions', 'Find Recursion')
+        self.fun_select = JComboBox(self.function_list)
 
-        self.fun_button = JButton("Execute")
+        # Sets up function execute
+        fun_button = JButton("Execute", actionPerformed=get_variables_in_function)
+
+        # Sets up table
+        self.tableData = [['wip', 'parseme', 'later']
+        ,['wip', 'parseme', 'later']]
+        colnames = ('Variable Name', 'Count', 'Recursion')
+        dataModel = DefaultTableModel(self.tableData, colnames)
+        self.table = JTable(dataModel)
+
+        tablePane = JScrollPane()
+        tablePane.setPreferredSize(Dimension(270,150))
+        tablePane.getViewport().setView(self.table)
+
+        panelTable = JPanel()
+        panelTable.add(tablePane)
+
+        # Filename to save to
+        self.textBox = JTextField(25)
+        self.textBox.text = "Enter Filename"
+
+        # Save / Load Buttons
+        save = JButton("Save")
+        load = JButton("Load")
+
+
+        panel = JPanel()
+        panel.add(self.fun_select)
+
         
-        apiFrame.add(self.j_list)
-        apiFrame.add(self.fun_button)
+        apiFrame.add(panel)
+        apiFrame.add(fun_button)
+        apiFrame.add(panelTable)
+        apiFrame.add(self.textBox)
+        apiFrame.add(save)
+        apiFrame.add(load)
 
         apiFrame.setVisible(True)
 
@@ -105,17 +190,7 @@ def send_https_request(address, path, data, headers):
         return None
 
 
-# Function to get the highlighted text from the decompile panel in Ghidra
-def get_highlighted_text():
-    currentProgram = getCurrentProgram()
-    decompiler = DecompInterface()
-    decompiler.openProgram(currentProgram)
-
-    highlighted_text = currentLocation.getDecompile().getCCodeMarkup()
-    return highlighted_text
-
-
-recompiled_code = get_highlighted_text()
+'''
 if recompiled_code:
     PROMPT = (
         "Please analyze the following recompiled code from Ghidra and provide a "
@@ -171,3 +246,4 @@ def format_response(response, max_width=80):
 response = openai_request()
 result_text = response['choices'][0]['text']
 print(result_text)
+'''
