@@ -26,12 +26,8 @@ fd = FlatDecompilerAPI(fp)
 # return all variables in the current function
 # NOTE: gets the local variable names, not meaningful names
 # tried to get from decompile, however it outs in a string, so there's not a parser for fncs in a string
-def get_variables_in_function():
-    # currentProgram = getCurrentProgram()
-    # decompiler = DecompInterface()
-    # decompiler.openProgram(currentProgram)
-    fnc = getFunctionContaining(currentAddress)
-    print(currentAddress)
+def get_variables_in_function(ca):
+    fnc = getFunctionContaining(ca)
     # decfnc = decompiler.decompileFunction(fnc, 5, monitor).getDecompiledFunction().getC()
     # fnc = currentLocation.getDecompile().getFunction()
     return fnc.getVariables(None)
@@ -67,13 +63,12 @@ def get_highlighted_text(event):
 
 class ScriptGUI:
     def runFunction(self, event):
-
-        state = getState()
-        program = state.getCurrentProgram()
-
         # Option for getting variable infromation
+        #address_idx = self.targ_addr.selectedIndex
+        #print(address_idx)
+        #print(self.function_address[self.targ_addr.selectedIndex])
         if self.fun_select.selectedIndex == 0:
-            var_list = get_variables_in_function()
+            var_list = get_variables_in_function(self.function_address[self.targ_addr.selectedIndex])
             self.colnames = ('Name', 'Data Type', 'Length')
             self.tableData = []
             for v in var_list:
@@ -110,8 +105,19 @@ class ScriptGUI:
         apiFrame.setTitle("Ghidra Datamanager")
         
         # Set up list of functions
-        self.function_list = ('Get Variables', 'Get Functions', 'Find Recursion')
+        self.function_list = ['Get Variables', 'Get Functions', 'Find Recursion']
         self.fun_select = JComboBox(self.function_list)
+
+        self.function_address = []
+        self.function_names = []
+        f = getFirstFunction()
+        while f is not None:
+            self.function_address.append(f.getEntryPoint())
+            self.function_names.append(f.getName())
+            f = getFunctionAfter(f)
+            
+
+        self.targ_addr = JComboBox(self.function_names)
 
         # Sets up function execute
         fun_button = JButton("Execute", actionPerformed=self.runFunction)
@@ -142,8 +148,13 @@ class ScriptGUI:
         panel = JPanel()
         panel.add(self.fun_select)
 
+        panel2 = JPanel()
+        panel2.add(self.targ_addr)
+        
+
         # Adds the objects to the GUI
         apiFrame.add(panel)
+        apiFrame.add(panel2)
         apiFrame.add(fun_button)
         apiFrame.add(panelTable)
         apiFrame.add(self.textBox)
