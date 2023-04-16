@@ -3,7 +3,7 @@
 import json
 import re
 import textwrap
-from ghidra.app.decompiler.flatapi import FlatDecompilerAPI
+from ghidra.app.decompiler import DecompInterface
 from ghidra.util.task import ConsoleTaskMonitor
 from ghidra.app.plugin.core.decompile import DecompilePlugin
 from ghidra.program.flatapi import FlatProgramAPI
@@ -14,7 +14,7 @@ import os
 from datetime import datetime
 
 # Set your API key
-api_key = ''
+api_key = 'API Key'
 
 # setting up writing to file
 cwd = currentProgram.getExecutablePath()
@@ -22,32 +22,22 @@ name_size = len(currentProgram.getName())
 filepath = cwd[:-(name_size)]
 fm = currentProgram.getFunctionManager()
 
-# setting up FlatProgram
-state = getState()
-program = state.getCurrentProgram()
-fp = FlatProgramAPI(program)
-fd = FlatDecompilerAPI(fp)
-
-# TODO: make file for all folders to go into, rn errno 22 for inaccess, at
-# to run right now, make GhidraPT folder in project folder
-# os.mkdir(filepath + "GhidraPT")
-
 #### INFORMATION GATHERING HELPER FUNCTIONS ####
 
-# adds all function names for program to a text file
-# TODO: filter out thunk functions
+# adds all function names for program to a text file and filters out thunk functions
 def get_function_names():
-    function = getFirstFunction()
-    with open(filepath + "GhidraPT/functions.txt", 'w') as file:
-        while function is not None:
-            file.write(function.getName() + '\n')
-            function = getFunctionAfter(function)
+    fnc = getFirstFunction()
+    with open(filepath + "GhidraPT/functionNames.txt", 'w') as file:
+        while fnc is not None:
+            if not fnc.isThunk():
+                file.write(fnc.getName() + '\n')
+            fnc = getFunctionAfter(fnc)
 
 # returns all functions the current function (at the current address) calls
 # currently rewrites file every time it's run, so it's specific to the function in the file
 def get_called_functions():
     fnc = fm.getFunctionContaining(currentAddress)
-    with open(filepath + "GhidraPT/called_functions.txt", 'w') as file:
+    with open(filepath + "GhidraPT/functionsCalledBy - " + fnc.getName() + ".txt", 'w') as file:
         all_fncs = fnc.getCalledFunctions(monitor)
         for f in all_fncs:
             try:
@@ -60,60 +50,35 @@ def get_called_functions():
 # currently rewrites file every time it's run, so it's specific to the function in the file
 def get_calling_functions():
     fnc = fm.getFunctionContaining(currentAddress)
-    with open(filepath + "GhidraPT/calling_functions.txt", 'w') as file:
+    with open(filepath + "GhidraPT/functionsCalling - " + fnc.getName() + ".txt", 'w') as file:
         all_fncs = fnc.getCallingFunctions(monitor)
         for f in all_fncs:
             file.write(f.toString() + '\n')
 
 # return all variables in the current function
 # NOTE: gets the local variable names, not meaningful names
-# tried to get from decompile, however it outs in a string, so there's not a parser for fncs in a string
 def get_variables_in_function():
-    # currentProgram = getCurrentProgram()
-    # decompiler = DecompInterface()
-    # decompiler.openProgram(currentProgram)
     fnc = getFunctionContaining(currentAddress)
-    # decfnc = decompiler.decompileFunction(fnc, 5, monitor).getDecompiledFunction().getC()
-    # fnc = currentLocation.getDecompile().getFunction()
-    with open(filepath + "GhidraPT/variables.txt", 'w') as file:
+    with open(filepath + "GhidraPT/variables - " + fnc.getName() + ".txt", 'w') as file:
         all_vars = fnc.getVariables(None)
         for v in all_vars:
             file.write(v.getName() + '\n')
 
 # writes the global namespace to a file
-# NOTE: how helpful is this in the grand scheme of things?
+# program wide, so it rewrites every time it's called in order to avoid duplicates
 def get_namespaces():
     namespaces = getCurrentProgram().getNamespaceManager().getGlobalNamespace()
-    with open(filepath + "GhidraPT/namespaces.txt", 'a+') as file:
+    with open(filepath + "GhidraPT/namespaces.txt", 'w') as file:
         file.write(namespaces)
-
 
 # Function to get the highlighted text from the decompile panel in Ghidra
 def get_highlighted_text():
-    # get highlighted text
-    # decompile that highlighted text?
-    # currentProgram = getCurrentProgram()
-    currhighlight = getState().getCurrentHighlight()
-    testhigh = getState().getCurrentHighlight().iterator()
-    print("current highlight")
-    print(currhighlight.toString())
-    # for i in testhigh:
-        # print(i)
-    # print("current highlight")
-    # print(currhighlight.toString())
-    # print(currhighlight)
-    decompiler = FlatDecompilerAPI()
-    # decompiler.openProgram(currentProgram)
-    fnc = getFunctionContaining(currentAddress)
-    print(fd.getDecompiler().decompileFunction(fnc, 5, monitor))
+    currentProgram = getCurrentProgram()
+    decompiler = DecompInterface()
+    decompiler.openProgram(currentProgram)
 
-    highlighted_text = currentLocation.getDecompile()
-    # highlight1 = state.getCurrentHighlight().toString()
-    # print("code decompile")
-    # # print(decompiler.decompileFunction(currentLocation, 5, monitor))
-    # print("highlighted text")
-    # print(highlight1)
-    # return highlighted_text
+    highlighted_text = currentLocation.getDecompile().getCCodeMarkup()
+    return highlighted_text
 
 
 recompiled_code = get_highlighted_text()
@@ -174,28 +139,14 @@ def format_response(api_response, max_width=80):
     return "\n" + formatted_response.strip() + "\n"
 
 
-# response = openai_query()
-# result_text = response['choices'][0]['text']
-# print("Prompt:\n\n"+PROMPT)
-# print(result_text)
+response = openai_query()
+result_text = response['choices'][0]['text']
+result_text = "didn't run chatGPT"
+print("Prompt:\n\n"+PROMPT)
+print(result_text)
 
-# append results to the end of a file for future use
-#get file path for file containing the executable - results are stored in the same folder
-# cwd = currentProgram.getExecutablePath()
-# name_size = len(currentProgram.getName())
-# filepath = cwd[:-(name_size)]
-
-# get_highlighted_text()
+# write results to file
 with open(filepath + "GhidraPT/results.txt", 'a+') as file:
     file.write("Run at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "\n")
-    # file.write(result_text)
+    file.write(result_text)
     file.write("\n\n---------------------------\n\n")
-
-# append all functions together - running the script multiple times on the same function will add that function multiple times to the file
-# function = re.search("Rewritten code:\\n\\n+(.*)$", result_text).group(1)
-# print(function)
-# with open(filepath + "functions.c", "a+") as file:
-#     file.write(function)
-
-
-# sort by function name, or have one file that compiles all the rewritten functions together?
