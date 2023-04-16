@@ -8,9 +8,30 @@ import json
 import logging
 import httplib
 import pickle
-from javax.swing import JFrame, JButton, JLabel, JTextField
+from javax.swing import JFrame, JButton, JLabel, JTextField, JList, JScrollPane
 from java.awt import FlowLayout
 
+class ScriptGUI:
+    def __init__(self):
+        apiFrame = JFrame()
+        apiFrame.setSize(300,300)
+        apiFrame.setLocation(200,200)
+        apiFrame.setTitle("Enter API Key")
+        
+        # Set up list of functions
+        self.function_list = ["pizza", "apple"]
+        self.j_list = JList(self.function_list)
+        j_scroll = JScrollPane(self.j_list)
+        j_scroll.getViewport().setView(self.j_list)
+
+        self.fun_button = JButton("Execute")
+        
+        apiFrame.add(self.j_list)
+        apiFrame.add(self.fun_button)
+
+        apiFrame.setVisible(True)
+
+'''
 textBox = JTextField(25)
 def saveKey(event):
     string = textBox.text
@@ -61,6 +82,8 @@ try:
     print(api_key)
 except:
     loadAPIFrame()
+'''
+ScriptGUI()
 
 def send_https_request(address, path, data, headers):
     try:
