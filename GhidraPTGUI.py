@@ -80,7 +80,21 @@ class ScriptGUI:
             print(self.tableData)
             self.updateTable()
         elif self.fun_select.selectedIndex == 1:
-            print("howdy")
+            f = getFirstFunction()
+            self.colnames = ('Name', 'Return Type', 'Address', 'Thunk')
+            self.tableData = []
+            while f is not None:
+                row = []
+                if (f.isThunk() and self.cb.isSelected()):
+                    f = getFunctionAfter(f)
+                    continue
+                row.append(f.getName())
+                row.append(f.getReturnType())
+                row.append(f.getEntryPoint())
+                row.append(f.isThunk())
+                self.tableData.append(row)
+                f = getFunctionAfter(f)
+            self.updateTable()
         elif self.fun_select.selectedIndex == 2:
             print("hello")
         else:
@@ -144,13 +158,13 @@ class ScriptGUI:
     def __init__(self):
         self.dataObject = None
         apiFrame = JFrame()
-        apiFrame.setSize(400,300)
+        apiFrame.setSize(380,350)
         apiFrame.setLocation(200,200)
         apiFrame.setLayout(FlowLayout())
         apiFrame.setTitle("Ghidra Datamanager")
         
         # Set up list of functions
-        self.function_list = ['Get Variables', 'Get Functions', 'Find Recursion']
+        self.function_list = ['Get Local Variables', 'All Functions', 'Called Functions']
         self.fun_select = JComboBox(self.function_list)
 
         self.function_address = []
@@ -168,15 +182,18 @@ class ScriptGUI:
         fun_button = JButton("Execute", actionPerformed=self.runFunction)
 
         # Sets up table
-        self.tableData = [['wip', 'parseme', 'later']
-        ,['wip', 'parseme', 'later']]
-        colnames = ('Variable Name', 'Count', 'Recursion')
+        colnames = ('Name', 'Data Type', 'Length')
+        self.tableData = []
         dataModel = DefaultTableModel(self.tableData, colnames)
         self.table = JTable(dataModel)
 
         self.tablePane = JScrollPane()
-        self.tablePane.setPreferredSize(Dimension(270,150))
+        self.tablePane.setPreferredSize(Dimension(320,170))
         self.tablePane.getViewport().setView(self.table)
+
+        self.cb = JCheckBox('parse Thunk?')
+        cbPanel = JPanel()
+        cbPanel.add(self.cb)
 
         panelTable = JPanel()
         panelTable.add(self.tablePane)
@@ -186,7 +203,7 @@ class ScriptGUI:
         self.textBox.text = "Enter Filename"
 
         # Save / Load Buttons
-        save = JButton("Save")
+        save = JButton("Save", actionPerformed=self.saveObject)
         load = JButton("Load")
 
 
@@ -199,6 +216,7 @@ class ScriptGUI:
 
         # Adds the objects to the GUI
         apiFrame.add(panel)
+        apiFrame.add(cbPanel)
         apiFrame.add(panel2)
         apiFrame.add(fun_button)
         apiFrame.add(panelTable)
@@ -207,7 +225,6 @@ class ScriptGUI:
         apiFrame.add(load)
 
         apiFrame.setVisible(True)
-
 
 ScriptGUI()
 
