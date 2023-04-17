@@ -1,6 +1,7 @@
 import json
 import re
 import textwrap
+import os
 from ghidra.app.decompiler.flatapi import FlatDecompilerAPI
 from ghidra.util.task import ConsoleTaskMonitor
 from ghidra.app.plugin.core.decompile import DecompilePlugin
@@ -8,7 +9,6 @@ from ghidra.program.flatapi import FlatProgramAPI
 import json
 import logging
 import httplib
-import os
 from datetime import datetime
 import httplib
 import pickle
@@ -23,6 +23,9 @@ program = state.getCurrentProgram()
 fp = FlatProgramAPI(program)
 fd = FlatDecompilerAPI(fp)
 fm = currentProgram.getFunctionManager()
+cwd = currentProgram.getExecutablePath()
+name_size = len(currentProgram.getName())
+filepath = cwd[:-(name_size)]
 
 # return all variables in the current function
 # NOTE: gets the local variable names, not meaningful names
@@ -213,7 +216,7 @@ class ScriptGUI:
 
 
             # Write the dictionary as a JSON object to a text file
-            with open('GhidraPT/'+self.textBox.text+'.json', 'w') as outfile:
+            with open(filepath + 'GhidraPT/'+self.textBox.text+'.json', 'w') as outfile:
                 json.dump(variable_info, outfile, indent=4)
 
             print("Variable information written to GhidraPT/" + self.textBox.text + ".json")
@@ -235,7 +238,7 @@ class ScriptGUI:
                 data_list[i]=(data_dict)
 
             # Write the data to a JSON file
-            with open('GhidraPT/'+ self.textBox.text+'.json', 'w') as file:
+            with open(filepath + 'GhidraPT/'+ self.textBox.text+'.json', 'w') as file:
                 json.dump(data_list, file, indent=4)
             print("Table information written to" + self.textBox.text + ".json")
 
