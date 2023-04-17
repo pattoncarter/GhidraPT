@@ -112,10 +112,10 @@ class ScriptGUI:
 
 
             # Write the dictionary as a JSON object to a text file
-            with open(self.textBox.text+'.json', 'w') as outfile:
+            with open('GhidraPT/'+self.textBox.text+'.json', 'w') as outfile:
                 json.dump(variable_info, outfile, indent=4)
 
-            print("Variable information written to" + self.textBox.text + ".json")
+            print("Variable information written to GhidraPT/" + self.textBox.text + ".json")
         else:
             # Get the row and column counts
             row_count = self.table.getRowCount()
@@ -134,7 +134,7 @@ class ScriptGUI:
                 data_list[i]=(data_dict)
 
             # Write the data to a JSON file
-            with open(self.textBox.text+'.json', 'w') as file:
+            with open('GhidraPT/'+ self.textBox.text+'.json', 'w') as file:
                 json.dump(data_list, file, indent=4)
             print("Table information written to" + self.textBox.text + ".json")
     def updateTable(self):
