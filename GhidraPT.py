@@ -94,6 +94,23 @@ def get_highlighted_text(event):
     # print("highlighted text")
     print(highlight1)
 
+def find_recursive_functions():
+    recursive_functions = []
+    f = getFirstFunction()
+    while f is not None:
+        fnc = fm.getFunctionContaining(f.getEntryPoint())
+        all_fncs = fnc.getCalledFunctions(monitor)
+        for func in all_fncs:
+            try:
+                if func.getEntryPoint() == f.getEntryPoint():
+                    recursive_functions.append(f)
+                    break
+            except Exception as e:
+                print(e)
+                pass
+        f = getFunctionAfter(f)
+    return recursive_functions
+
 class ScriptGUI:
     def runFunction(self, event):
         # Option for getting variable infromation
@@ -157,6 +174,18 @@ class ScriptGUI:
                     row.append(f.getEntryPoint())
                     row.append(f.isThunk())   
                     self.tableData.append(row)
+            self.updateTable()
+        elif self.fun_select.selectedIndex == 4:
+            fun_list = find_recursive_functions()
+            self.colnames = ('Name', 'Return Type', 'Address', 'Thunk')
+            self.tableData = []
+            for f in fun_list:
+                row = []
+                row.append(f.getName())
+                row.append(f.getReturnType())
+                row.append(f.getEntryPoint())
+                row.append(f.isThunk())
+                self.tableData.append(row)
             self.updateTable()
         else:
             print("error 404")
@@ -223,7 +252,7 @@ class ScriptGUI:
         apiFrame.setTitle("Ghidra Datamanager")
         
         # Set up list of functions
-        self.function_list = ['Get Local Variables', 'All Functions', 'Called Functions', 'Caller Functions']
+        self.function_list = ['Get Local Variables', 'All Functions', 'Called Functions', 'Caller Functions', 'Recursive Functions']
         self.fun_select = JComboBox(self.function_list)
 
         self.function_address = []
@@ -266,7 +295,7 @@ class ScriptGUI:
         self.textBox.text = "Enter Filename"
 
         # Save / Load Buttons
-        save = JButton("Save")
+        save = JButton("Save", actionPerformed=self.saveObject)
 
         panel = JPanel()
         panel.add(self.fun_select)
