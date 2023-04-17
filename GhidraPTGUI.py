@@ -80,7 +80,21 @@ class ScriptGUI:
             print(self.tableData)
             self.updateTable()
         elif self.fun_select.selectedIndex == 1:
-            print("howdy")
+            f = getFirstFunction()
+            self.colnames = ('Name', 'Return Type', 'Address', 'Thunk')
+            self.tableData = []
+            while f is not None:
+                row = []
+                if (f.isThunk() and self.cb.isSelected()):
+                    f = getFunctionAfter(f)
+                    continue
+                row.append(f.getName())
+                row.append(f.getReturnType())
+                row.append(f.getEntryPoint())
+                row.append(f.isThunk())
+                self.tableData.append(row)
+                f = getFunctionAfter(f)
+            self.updateTable()
         elif self.fun_select.selectedIndex == 2:
             print("hello")
         else:
@@ -90,8 +104,53 @@ class ScriptGUI:
         print("ewwo")
 
     def saveObject(self, event):
-        print("ewwo")
+        if self.fun_select.selectedIndex == 0:
+                # Get the current program and function being viewed
+            current_function = getFunctionContaining(currentAddress)
 
+            # Initialize the decompiler
+            decomp_interface = DecompInterface()
+            decomp_interface.openProgram(program)
+            # Decompile the function
+            function_decompilation = decomp_interface.decompileFunction(current_function, 0, monitor)
+
+            # Get the high-level function representation
+            high_function = function_decompilation.getHighFunction()
+
+            # Extract the names and types of the local variables and add them to a dictionary
+            variable_info = {}
+            for var_symbol in high_function.getLocalSymbolMap().getSymbols():
+                variable_name = var_symbol.getName()
+                variable_type = var_symbol.getDataType().getName()
+                variable_info[variable_name] = variable_type
+
+
+            # Write the dictionary as a JSON object to a text file
+            with open('GhidraPT/'+self.textBox.text+'.json', 'w') as outfile:
+                json.dump(variable_info, outfile, indent=4)
+
+            print("Variable information written to GhidraPT/" + self.textBox.text + ".json")
+        else:
+            # Get the row and column counts
+            row_count = self.table.getRowCount()
+            col_count = self.table.getColumnCount()
+            col_names = ('Name', 'Return Type', 'Address', 'Thunk')
+            # Create a list of dictionaries to hold the data
+            data_list = {}
+
+            # Iterate over the rows and columns of the table
+            for i in range(row_count):
+                data_dict = {}
+                for j in range(col_count):
+                    value = self.table.getValueAt(i, j)
+                    key = col_names[j]
+                    data_dict[key] = str(value)
+                data_list[i]=(data_dict)
+
+            # Write the data to a JSON file
+            with open('GhidraPT/'+ self.textBox.text+'.json', 'w') as file:
+                json.dump(data_list, file, indent=4)
+            print("Table information written to" + self.textBox.text + ".json")
     def updateTable(self):
         dataModels = DefaultTableModel(self.tableData, self.colnames)
         self.table = JTable(dataModels)
@@ -99,13 +158,13 @@ class ScriptGUI:
     def __init__(self):
         self.dataObject = None
         apiFrame = JFrame()
-        apiFrame.setSize(400,300)
+        apiFrame.setSize(380,350)
         apiFrame.setLocation(200,200)
         apiFrame.setLayout(FlowLayout())
         apiFrame.setTitle("Ghidra Datamanager")
         
         # Set up list of functions
-        self.function_list = ['Get Variables', 'Get Functions', 'Find Recursion']
+        self.function_list = ['Get Local Variables', 'All Functions', 'Called Functions']
         self.fun_select = JComboBox(self.function_list)
 
         self.function_address = []
@@ -123,15 +182,18 @@ class ScriptGUI:
         fun_button = JButton("Execute", actionPerformed=self.runFunction)
 
         # Sets up table
-        self.tableData = [['wip', 'parseme', 'later']
-        ,['wip', 'parseme', 'later']]
-        colnames = ('Variable Name', 'Count', 'Recursion')
+        colnames = ('Name', 'Data Type', 'Length')
+        self.tableData = []
         dataModel = DefaultTableModel(self.tableData, colnames)
         self.table = JTable(dataModel)
 
         self.tablePane = JScrollPane()
-        self.tablePane.setPreferredSize(Dimension(270,150))
+        self.tablePane.setPreferredSize(Dimension(320,170))
         self.tablePane.getViewport().setView(self.table)
+
+        self.cb = JCheckBox('parse Thunk?')
+        cbPanel = JPanel()
+        cbPanel.add(self.cb)
 
         panelTable = JPanel()
         panelTable.add(self.tablePane)
@@ -141,7 +203,7 @@ class ScriptGUI:
         self.textBox.text = "Enter Filename"
 
         # Save / Load Buttons
-        save = JButton("Save")
+        save = JButton("Save", actionPerformed=self.saveObject)
         load = JButton("Load")
 
 
@@ -154,6 +216,7 @@ class ScriptGUI:
 
         # Adds the objects to the GUI
         apiFrame.add(panel)
+        apiFrame.add(cbPanel)
         apiFrame.add(panel2)
         apiFrame.add(fun_button)
         apiFrame.add(panelTable)
@@ -162,7 +225,6 @@ class ScriptGUI:
         apiFrame.add(load)
 
         apiFrame.setVisible(True)
-
 
 ScriptGUI()
 
