@@ -6,7 +6,7 @@ The Ghidra Data Manager is a tool for collecting and organizing data from throug
 
 
 ## Usage
-The Data Manager will scan through your file and create data tables with the selected values for selected functions. These values include variable names and types within the functions, all of the functions in the file, what functions are called by a specific function, what functions call a specific function, and what functions are recursive within the file. This can all be accessed through a GUI that is executed by the script. Within this GUI you can select what funcitons to examine and what about them you'd like to see. We also have the option for you to export all of this data in JSON format to a file of your naming convention. These files will be stored within your GhidraPT foler wherver your executable is housed.
+The Data Manager will scan through your file and create data tables with the selected values for selected functions. These values include variable names and types within the functions, all of the functions in the file, what functions are called by a specific function, what functions call a specific function, and what functions are recursive within the file. This can all be accessed through a GUI that is executed by the script. Within this GUI you can select what functions to examine and what about them you'd like to see. We also have the option for you to export all of this data in JSON format to a file of your naming convention. These files will be stored within your GhidraPT folder wherever your executable is housed.
 
 ## Executable Placement
 This script is meant to be run on an executable within a folder that has a subfolder named GhirdaPT. To complete this process follow these steps:
@@ -24,3 +24,4 @@ NOTE: If your executable was already imported into your Ghidra project, you need
 - Click the green + to add a new location.
 - Find the location of the DataManager.py file and select it.
 - Find the script within the script manager to run it on your project.
+
