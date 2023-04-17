@@ -15,7 +15,7 @@ import pickle
 from javax.swing import *
 from java.awt import *
 from javax.swing.table import DefaultTableModel
-
+from ghidra.app.decompiler import DecompInterface
 
 # setting up FlatProgram
 state = getState()
