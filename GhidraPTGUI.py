@@ -5,7 +5,6 @@ from ghidra.app.decompiler.flatapi import FlatDecompilerAPI
 from ghidra.util.task import ConsoleTaskMonitor
 from ghidra.app.plugin.core.decompile import DecompilePlugin
 from ghidra.program.flatapi import FlatProgramAPI
-import json
 import logging
 import httplib
 import os
@@ -22,6 +21,7 @@ state = getState()
 program = state.getCurrentProgram()
 fp = FlatProgramAPI(program)
 fd = FlatDecompilerAPI(fp)
+fm = currentProgram.getFunctionManager()
 
 # return all variables in the current function
 # NOTE: gets the local variable names, not meaningful names
@@ -37,6 +37,8 @@ def get_variables_in_function(ca):
             file.write(v.getName() + '\n')
 
 # Function to get the highlighted text from the decompile panel in Ghidra
+
+
 def get_highlighted_text(event):
     # get highlighted text
     # decompile that highlighted text?
@@ -45,7 +47,7 @@ def get_highlighted_text(event):
     print("current highlight")
     print(currhighlight.toString())
     # for i in testhigh:
-        # print(i)
+    # print(i)
     # print("current highlight")
     # print(currhighlight.toString())
     # print(currhighlight)
@@ -60,6 +62,25 @@ def get_highlighted_text(event):
     # # print(decompiler.decompileFunction(currentLocation, 5, monitor))
     # print("highlighted text")
     print(highlight1)
+
+
+def find_recursive_functions():
+    recursive_functions = []
+    f = getFirstFunction()
+    while f is not None:
+        fnc = fm.getFunctionContaining(f.getEntryPoint())
+        all_fncs = fnc.getCalledFunctions(monitor)
+        for func in all_fncs:
+            try:
+                if func.getEntryPoint() == f.getEntryPoint():
+                    recursive_functions.append(f)
+                    break
+            except Exception as e:
+                print(e)
+                pass
+        f = getFunctionAfter(f)
+    return recursive_functions
+
 
 class ScriptGUI:
     def runFunction(self, event):
@@ -77,12 +98,21 @@ class ScriptGUI:
                 cur.append(v.getDataType())
                 cur.append(v.getLength())
                 self.tableData.append(cur)
-            print(self.tableData)
             self.updateTable()
         elif self.fun_select.selectedIndex == 1:
             print("howdy")
         elif self.fun_select.selectedIndex == 2:
-            print("hello")
+            fun_list = find_recursive_functions()
+            self.colnames = ('Name', 'Return Type', 'Address', 'Thunk')
+            self.tableData = []
+            for f in fun_list:
+                row = []
+                row.append(f.getName())
+                row.append(f.getReturnType())
+                row.append(f.getEntryPoint())
+                row.append(f.isThunk())
+                self.tableData.append(row)
+            self.updateTable()
         else:
             print("error 404")
 
@@ -96,14 +126,15 @@ class ScriptGUI:
         dataModels = DefaultTableModel(self.tableData, self.colnames)
         self.table = JTable(dataModels)
         self.tablePane.getViewport().setView(self.table)
+
     def __init__(self):
         self.dataObject = None
         apiFrame = JFrame()
-        apiFrame.setSize(400,300)
-        apiFrame.setLocation(200,200)
+        apiFrame.setSize(400, 300)
+        apiFrame.setLocation(200, 200)
         apiFrame.setLayout(FlowLayout())
         apiFrame.setTitle("Ghidra Datamanager")
-        
+
         # Set up list of functions
         self.function_list = ['Get Variables', 'Get Functions', 'Find Recursion']
         self.fun_select = JComboBox(self.function_list)
@@ -123,14 +154,14 @@ class ScriptGUI:
         fun_button = JButton("Execute", actionPerformed=self.runFunction)
 
         # Sets up table
-        self.tableData = [['wip', 'parseme', 'later']
-        ,['wip', 'parseme', 'later']]
+        self.tableData = [['wip', 'parseme', 'later'],
+                          ['wip', 'parseme', 'later']]
         colnames = ('Variable Name', 'Count', 'Recursion')
         dataModel = DefaultTableModel(self.tableData, colnames)
         self.table = JTable(dataModel)
 
         self.tablePane = JScrollPane()
-        self.tablePane.setPreferredSize(Dimension(270,150))
+        self.tablePane.setPreferredSize(Dimension(270, 150))
         self.tablePane.getViewport().setView(self.table)
 
         panelTable = JPanel()
@@ -143,7 +174,6 @@ class ScriptGUI:
         # Save / Load Buttons
         save = JButton("Save")
         load = JButton("Load")
-
 
         panel = JPanel()
         panel.add(self.fun_select)
@@ -165,4 +195,3 @@ class ScriptGUI:
 
 
 ScriptGUI()
-
