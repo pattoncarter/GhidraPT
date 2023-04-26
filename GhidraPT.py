@@ -170,13 +170,15 @@ def rewrite_variables(ca):
     decfnc = currentLocation.getDecompile().getHighFunction()
     commit_params = HighFunctionDBUtil().commitParamsToDatabase(decfnc, True , .getSource().valueOf("USER_DEFINED"))
     old_params = fnc.getParameters()
-    # get carter's prompt
+
+    # prompt - can rewrite
     var_prompt = ("Please analyze the following recompiled code from Ghidra and "
                  "rewrite the code, changing the variable names to have more "
                  "meaning. Format the old variable names and new variables names "
                  "in a JSON file format with old variable : new variable with"
                  " both in strings. Do not output the rewritten code. \n "
                  + str(recompiled_code))
+    # request renamed variables
     # result = openai_query(prompt=var_prompt)
     # new_vars = result['choices'][0]['text']
     new_vars = {
@@ -192,7 +194,7 @@ def rewrite_variables(ca):
     # user selects which variables to accept/deny
 
     #rewriting the variables in ghidra
-    #rewrites the local variables that come from asm, need to also do params
+    #rewriting local variables
     for v in old_vars:
         try:
             new_name = new_vars[v.getName()]
