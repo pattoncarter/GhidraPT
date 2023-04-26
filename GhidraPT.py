@@ -16,7 +16,8 @@ from javax.swing import *
 from java.awt import *
 from javax.swing.table import DefaultTableModel
 from ghidra.app.decompiler import DecompInterface
-from ghidra.program.model import *
+from ghidra.program.model.pcode import *
+# from ghidra.program.model import *
 
 
 
@@ -168,7 +169,7 @@ def rewrite_variables(ca):
     # parameters are loaded into registers then passed in, so how to find params?
     # have to commit params before accessing them
     decfnc = currentLocation.getDecompile().getHighFunction()
-    commit_params = HighFunctionDBUtil().commitParamsToDatabase(decfnc, True , valueOf("USER_DEFINED"))
+    commit_params = HighFunctionDBUtil().commitParamsToDatabase(decfnc, True, old_vars[0].getSource().valueOf("USER_DEFINED"))
     old_params = fnc.getParameters()
 
     # prompt - can rewrite
