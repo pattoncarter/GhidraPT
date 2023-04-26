@@ -16,10 +16,12 @@ from javax.swing import *
 from java.awt import *
 from javax.swing.table import DefaultTableModel
 from ghidra.app.decompiler import DecompInterface
-from ghidra.program.model.pcode import *
+<<<<<<< HEAD:GhidraPT.py
 
+=======
+>>>>>>> 533de0d4ac95edd60eeeb6e5310ee1b9af68c245:DataManager.py
 
-
+api_key = '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'
 
 # setting up FlatProgram
 state = getState()
@@ -39,6 +41,14 @@ def get_variables_in_function(ca):
     # decfnc = decompiler.decompileFunction(fnc, 5, monitor).getDecompiledFunction().getC()
     # fnc = currentLocation.getDecompile().getFunction()
     return fnc.getVariables(None)
+
+# rewrite variable names with meaningful words, populated by chatGPT
+def rewrite_variables(ca):
+    fnc = getFunctionContaining(ca)
+    vars = fnc.getVariables(None)
+    print(vars)
+
+rewrite_variables(program.function_address[program.targ_addr.selectedIndex])
 
 # returns all functions that call the current function (at the current address)
 # currently rewrites file every time it's run, so it's specific to the function in the file
@@ -161,63 +171,6 @@ def format_response(api_response, max_width=80):
 result_text = "no chatgpt"
 print(result_text)
 
-# rewrite variable names with meaningful words, populated by chatGPT
-def rewrite_variables(ca):
-    fnc = getFunctionContaining(ca)
-    old_vars = fnc.getAllVariables()
-    # parameters are loaded into registers then passed in, so how to find params?
-    # have to commit params before accessing them
-    decfnc = currentLocation.getDecompile().getHighFunction()
-    commit_params = HighFunctionDBUtil().commitParamsToDatabase(decfnc, True , .getSource().valueOf("USER_DEFINED"))
-    old_params = fnc.getParameters()
-    # get carter's prompt
-    var_prompt = ("Please analyze the following recompiled code from Ghidra and "
-                 "rewrite the code, changing the variable names to have more "
-                 "meaning. Format the old variable names and new variables names "
-                 "in a JSON file format with old variable : new variable with"
-                 " both in strings. Do not output the rewritten code. \n "
-                 + str(recompiled_code))
-    # result = openai_query(prompt=var_prompt)
-    # new_vars = result['choices'][0]['text']
-    new_vars = {
-        "param_1": "inputBlock",
-        "param_2": "outputBlock",
-        "param_3": "roundKey",
-        "local_28": "state",
-        "local_18": "rounds",
-        "local_14": "i",
-        "local_10": "j",
-        "local_c": "k"}
-
-    # user selects which variables to accept/deny
-
-    #rewriting the variables in ghidra
-    #rewrites the local variables that come from asm, need to also do params
-    for v in old_vars:
-        try:
-            new_name = new_vars[v.getName()]
-            try:
-                v.setName(new_name, v.getSource().valueOf("USER_DEFINED"))
-            except Exception as e:
-                print(e)
-        except Exception as e:
-            pass
-
-    # rename all params
-    for p in old_params:
-        try:
-            new_name = new_vars[p.getName()]
-            print(p)
-            try:
-                p.setName(new_name, p.getSource().valueOf("USER_DEFINED"))
-            except Exception as e:
-                print(e)
-        except Exception as e:
-            pass
-
-
-rewrite_variables(state.getCurrentAddress())
-
 class ScriptGUI:
     def runFunction(self, event):
         # Option for getting variable infromation
@@ -320,7 +273,7 @@ class ScriptGUI:
 
 
             # Write the dictionary as a JSON object to a text file
-            with open('GhidraPT/'+self.textBox.text+'.json', 'w') as outfile:
+            with open(filepath + 'GhidraPT/'+self.textBox.text+'.json', 'w') as outfile:
                 json.dump(variable_info, outfile, indent=4)
 
             print("Variable information written to GhidraPT/" + self.textBox.text + ".json")
@@ -342,7 +295,7 @@ class ScriptGUI:
                 data_list[i]=(data_dict)
 
             # Write the data to a JSON file
-            with open('GhidraPT/'+ self.textBox.text+'.json', 'w') as file:
+            with open(filepath + 'GhidraPT/'+ self.textBox.text+'.json', 'w') as file:
                 json.dump(data_list, file, indent=4)
             print("Table information written to" + self.textBox.text + ".json")
 
@@ -424,4 +377,4 @@ class ScriptGUI:
         apiFrame.setVisible(True)
 
 
-# ScriptGUI()
+ScriptGUI()
