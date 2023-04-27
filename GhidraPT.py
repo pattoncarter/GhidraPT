@@ -17,9 +17,9 @@ from java.awt import *
 from javax.swing.table import DefaultTableModel
 from ghidra.app.decompiler import DecompInterface
 from ghidra.program.model.pcode import *
-# from ghidra.program.model import *
+import ast
 
-
+api_key = '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'
 
 
 # setting up FlatProgram
@@ -158,6 +158,7 @@ def format_response(api_response, max_width=80):
 
 
 # response = openai_query()
+# print(response)
 # result_text = response['choices'][0]['text']
 result_text = "no chatgpt"
 print(result_text)
@@ -180,17 +181,9 @@ def rewrite_variables(ca):
                  " both in strings. Do not output the rewritten code. \n "
                  + str(recompiled_code))
     # request renamed variables
-    # result = openai_query(prompt=var_prompt)
-    # new_vars = result['choices'][0]['text']
-    new_vars = {
-        "param_1": "inputBlock",
-        "param_2": "outputBlock",
-        "param_3": "roundKey",
-        "local_28": "state",
-        "local_18": "rounds",
-        "local_14": "i",
-        "local_10": "j",
-        "local_c": "k"}
+    result = openai_query(prompt=var_prompt)
+    vars_str = result['choices'][0]['text']
+    new_vars = ast.literal_eval(vars_str)
 
     # user selects which variables to accept/deny
 
@@ -198,6 +191,7 @@ def rewrite_variables(ca):
     #rewriting local variables
     for v in old_vars:
         try:
+            print(new_vars[v.getName()])
             new_name = new_vars[v.getName()]
             try:
                 v.setName(new_name, v.getSource().valueOf("USER_DEFINED"))
@@ -209,8 +203,8 @@ def rewrite_variables(ca):
     # rename all params
     for p in old_params:
         try:
+            print(new_vars[p.getName()])
             new_name = new_vars[p.getName()]
-            print(p)
             try:
                 p.setName(new_name, p.getSource().valueOf("USER_DEFINED"))
             except Exception as e:
@@ -219,7 +213,8 @@ def rewrite_variables(ca):
             pass
 
 
-rewrite_variables(state.getCurrentAddress())
+print(currentAddress)
+rewrite_variables(currentAddress)
 
 class ScriptGUI:
     def runFunction(self, event):
