@@ -19,7 +19,8 @@ from ghidra.app.decompiler import DecompInterface
 from ghidra.program.model.pcode import *
 import ast
 
-api_key = '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'
+api_key = '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'
+'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'
 
 
 # setting up FlatProgram
@@ -166,12 +167,61 @@ print(result_text)
 # rewrite variable names with meaningful words, populated by chatGPT
 def rewrite_variables(ca):
     fnc = getFunctionContaining(ca)
-    old_vars = fnc.getAllVariables()
-    # parameters are loaded into registers then passed in, so how to find params?
-    # have to commit params before accessing them
+    # need to get variables from asm not from decompile
     decfnc = currentLocation.getDecompile().getHighFunction()
-    commit_params = HighFunctionDBUtil().commitParamsToDatabase(decfnc, True, old_vars[0].getSource().valueOf("USER_DEFINED"))
+    decvars = decfnc.getLocalSymbolMap()
+    old_vars = decvars.getSymbols()
+    state_workaround = fnc.getLocalVariables()
+    # have to commit params before accessing them
+    commit_params = HighFunctionDBUtil().commitParamsToDatabase(decfnc, True, state_workaround[0].getSource().valueOf("USER_DEFINED"))
     old_params = fnc.getParameters()
+
+    # (1) get address of variable in asm, get symbol at(addr).setname
+    # (2)
+
+# ---------------------------------------------------------------------------------------------------
+# == helper functions =============================================================================
+def get_high_function(func):
+    options = DecompileOptions()
+    monitor = ConsoleTaskMonitor()
+    ifc = DecompInterface()
+    ifc.setOptions(options)
+    ifc.openProgram(getCurrentProgram())
+    # Setting a simplification style will strip useful `indirect` information.
+    # Please don't use this unless you know why you're using it.
+    #ifc.setSimplificationStyle("normalize")
+    res = ifc.decompileFunction(func, 60, monitor)
+    high = res.getHighFunction()
+    return high
+
+def dump_refined_pcode(func, high_func):
+    opiter = high_func.getPcodeOps()
+    while opiter.hasNext():
+        op = opiter.next()
+        print("{}".format(op.toString()))
+	print(type(op))
+
+# == run examples =================================================================================
+func = getGlobalFunctions("func")[0]    # assumes only one function named `main`
+hf = get_high_function(func)            # we need a high function from the decompiler
+dump_refined_pcode(func, hf)            # dump straight refined pcode as strings
+
+# ----------------------------------------------------------------------------------------------------
+
+
+    for i, symbol in enumerate(old_vars):
+    	print("\nSymbol {}:".format(i+1))
+      	print("  name:         {}".format(symbol.name))
+      	print("  dataType:     {}".format(symbol.dataType))
+    	hs = symbol.getHighVariable()  # note important part here
+        instances = hs.getInstances()  # note important part here
+    	for instance in instances:
+    		print("\n  instance:     {}".format(instance))
+    		print("  type:         {}".format(type(instance)))
+    		print("  uniqueID:     {}".format(instance.uniqueId))
+    		print("  PCAddress:    {}".format(instance.getPCAddress()))
+    		for desc in instance.getDescendants():
+    			print("  Descendant:   {}".format(desc))
 
     # prompt - can rewrite
     var_prompt = ("Please analyze the following recompiled code from Ghidra and "
@@ -181,39 +231,48 @@ def rewrite_variables(ca):
                  " both in strings. Do not output the rewritten code. \n "
                  + str(recompiled_code))
     # request renamed variables
-    result = openai_query(prompt=var_prompt)
-    vars_str = result['choices'][0]['text']
-    new_vars = ast.literal_eval(vars_str)
+    # result = openai_query(prompt=var_prompt)
+    # vars_str = result['choices'][0]['text']
+    # new_vars = ast.literal_eval(vars_str)
+    new_vars = {'iVar1': 'inputImageFileLength', '__stream_00': 'inputAudioFile', '__s': 'outputFile', 'commandLineArgs': 'commandLineArguments', '__stream': 'inputImageFile', 'pvVar2': 'inputImageFileBuffer'}
+    # print(old_vars)
+    # print(new_vars)
+    # print(old_params)
+
+    # chat is getting the recompiled code and using those var names as old, while old_vars has asm version of those
 
     # user selects which variables to accept/deny
 
     #rewriting the variables in ghidra
     #rewriting local variables
+    # for o in old_vars:
+    #     o.setNameLock(True)
+    #     print(o.getName())
+
     for v in old_vars:
         try:
-            print(new_vars[v.getName()])
             new_name = new_vars[v.getName()]
             try:
-                v.setName(new_name, v.getSource().valueOf("USER_DEFINED"))
+                v.getSymbol().setName(new_name, v.getSymbol().getSource().valueOf("USER_DEFINED"))
             except Exception as e:
                 print(e)
         except Exception as e:
+            print("Didn't find variable: " + v.getName())
             pass
 
     # rename all params
     for p in old_params:
         try:
-            print(new_vars[p.getName()])
+            # print(new_vars[p.getName()])
             new_name = new_vars[p.getName()]
             try:
                 p.setName(new_name, p.getSource().valueOf("USER_DEFINED"))
             except Exception as e:
                 print(e)
         except Exception as e:
+            print("Didn't find param: " + p.getName())
             pass
 
-
-print(currentAddress)
 rewrite_variables(currentAddress)
 
 class ScriptGUI:
