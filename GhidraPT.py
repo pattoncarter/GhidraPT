@@ -19,7 +19,7 @@ from ghidra.app.decompiler import DecompInterface, DecompileOptions
 from ghidra.program.model.pcode import *
 import ast
 
-api_key = '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'
+api_key =
 
 
 # setting up FlatProgram
@@ -173,38 +173,8 @@ def rewrite_variables(ca):
     commit_params = HighFunctionDBUtil().commitParamsToDatabase(decfnc, True, old_vars[0].getSource().valueOf("USER_DEFINED"))
     old_params = fnc.getParameters()
 
-    # set all names initially
-    i = 1
-    for v in old_vars:
-        try:
-            v.setName("var"+str(i), v.getSource().valueOf("USER_DEFINED"))
-        except Exception as e:
-            print("no change v " + e)
-        i+=1
-
-    # rename all params
-    i = 1
-    for p in old_params:
-        try:
-            p.setName("param"+str(i), p.getSource().valueOf("USER_DEFINED"))
-        except Exception as e:
-            print("no change p " + e)
-        i+= 1
-
-    # resetting variables
-    fnc = getFunctionContaining(ca)
-    old_vars = fnc.getAllVariables()
-    # have to commit params before accessing them
-    decfnc = currentLocation.getDecompile().getHighFunction()
-    commit_params = HighFunctionDBUtil().commitParamsToDatabase(decfnc, True, old_vars[0].getSource().valueOf("USER_DEFINED"))
-    old_params = fnc.getParameters()
-    print(old_vars)
-    # print(old_params)
-
     # prompt - can rewrite
     recomp_code = currentLocation.getDecompile().getDecompiledFunction().getC()
-    print(str(recomp_code))
-    # recomp_code = decfnc
     var_prompt = ("Please analyze the following recompiled code from Ghidra and "
                  "rewrite the code, changing the variable names to have more "
                  "meaning. Format the old variable names and new variables names "
@@ -212,13 +182,11 @@ def rewrite_variables(ca):
                  " both in strings. Do not output the rewritten code. \n "
                  + str(recomp_code))
     # request renamed variables
-    print(var_prompt)
+    # print(var_prompt)
     result = openai_query(prompt=var_prompt)
-    print(result)
     vars_str = result['choices'][0]['text']
+    print(vars_str)
     new_vars = ast.literal_eval(vars_str)
-    print("-------------------------")
-    print(new_vars)
 
     # user selects which variables to accept/deny
 
@@ -236,16 +204,16 @@ def rewrite_variables(ca):
             pass
 
     # rename all params
-    # for p in old_params:
-    #     try:
-    #         print(new_vars[p.getName()])
-    #         new_name = new_vars[p.getName()]
-    #         try:
-    #             p.setName(new_name, p.getSource().valueOf("USER_DEFINED"))
-    #         except Exception as e:
-    #             print(e)
-    #     except Exception as e:
-    #         pass
+    for p in old_params:
+        try:
+            print(new_vars[p.getName()])
+            new_name = new_vars[p.getName()]
+            try:
+                p.setName(new_name, p.getSource().valueOf("USER_DEFINED"))
+            except Exception as e:
+                print(e)
+        except Exception as e:
+            pass
 
 rewrite_variables(currentAddress)
 
