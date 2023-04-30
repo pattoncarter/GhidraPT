@@ -15,11 +15,11 @@ import pickle
 from javax.swing import *
 from java.awt import *
 from javax.swing.table import DefaultTableModel
-from ghidra.app.decompiler import DecompInterface
+from ghidra.app.decompiler import DecompInterface, DecompileOptions
 from ghidra.program.model.pcode import *
 import ast
 
-api_key = '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'
+api_key = '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'
 
 
 # setting up FlatProgram
@@ -173,17 +173,52 @@ def rewrite_variables(ca):
     commit_params = HighFunctionDBUtil().commitParamsToDatabase(decfnc, True, old_vars[0].getSource().valueOf("USER_DEFINED"))
     old_params = fnc.getParameters()
 
+    # set all names initially
+    i = 1
+    for v in old_vars:
+        try:
+            v.setName("var"+str(i), v.getSource().valueOf("USER_DEFINED"))
+        except Exception as e:
+            print("no change v " + e)
+        i+=1
+
+    # rename all params
+    i = 1
+    for p in old_params:
+        try:
+            p.setName("param"+str(i), p.getSource().valueOf("USER_DEFINED"))
+        except Exception as e:
+            print("no change p " + e)
+        i+= 1
+
+    # resetting variables
+    fnc = getFunctionContaining(ca)
+    old_vars = fnc.getAllVariables()
+    # have to commit params before accessing them
+    decfnc = currentLocation.getDecompile().getHighFunction()
+    commit_params = HighFunctionDBUtil().commitParamsToDatabase(decfnc, True, old_vars[0].getSource().valueOf("USER_DEFINED"))
+    old_params = fnc.getParameters()
+    print(old_vars)
+    # print(old_params)
+
     # prompt - can rewrite
+    recomp_code = currentLocation.getDecompile().getDecompiledFunction().getC()
+    print(str(recomp_code))
+    # recomp_code = decfnc
     var_prompt = ("Please analyze the following recompiled code from Ghidra and "
                  "rewrite the code, changing the variable names to have more "
                  "meaning. Format the old variable names and new variables names "
                  "in a JSON file format with old variable : new variable with"
                  " both in strings. Do not output the rewritten code. \n "
-                 + str(recompiled_code))
+                 + str(recomp_code))
     # request renamed variables
+    print(var_prompt)
     result = openai_query(prompt=var_prompt)
+    print(result)
     vars_str = result['choices'][0]['text']
     new_vars = ast.literal_eval(vars_str)
+    print("-------------------------")
+    print(new_vars)
 
     # user selects which variables to accept/deny
 
@@ -196,24 +231,22 @@ def rewrite_variables(ca):
             try:
                 v.setName(new_name, v.getSource().valueOf("USER_DEFINED"))
             except Exception as e:
-                print(e)
+                print("error: " + e)
         except Exception as e:
             pass
 
     # rename all params
-    for p in old_params:
-        try:
-            print(new_vars[p.getName()])
-            new_name = new_vars[p.getName()]
-            try:
-                p.setName(new_name, p.getSource().valueOf("USER_DEFINED"))
-            except Exception as e:
-                print(e)
-        except Exception as e:
-            pass
+    # for p in old_params:
+    #     try:
+    #         print(new_vars[p.getName()])
+    #         new_name = new_vars[p.getName()]
+    #         try:
+    #             p.setName(new_name, p.getSource().valueOf("USER_DEFINED"))
+    #         except Exception as e:
+    #             print(e)
+    #     except Exception as e:
+    #         pass
 
-
-print(currentAddress)
 rewrite_variables(currentAddress)
 
 class ScriptGUI:
